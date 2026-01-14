@@ -1,5 +1,6 @@
 package com.nel.workoutlog.controller;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.nel.workoutlog.entity.User;
 import com.nel.workoutlog.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,8 @@ import java.util.Optional;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
 
     public AuthController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -26,6 +29,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Username already exists");
         }
 
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
     }
@@ -40,7 +44,7 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid username or password");
         }
 
-        if (!existingUser.get().getPassword().equals(user.getPassword())) {
+        if (!passwordEncoder.matches(user.getPassword(), existingUser.get().getPassword())) {
             return ResponseEntity.status(401).body("Invalid username or password");
         }
 
